@@ -18,6 +18,12 @@ def test_calculation_type_enum_values():
     assert CalculationType.SUBTRACTION.value == "subtraction"
     assert CalculationType.MULTIPLICATION.value == "multiplication"
     assert CalculationType.DIVISION.value == "division"
+    assert CalculationType.POWER.value == "power"
+    assert CalculationType.MODULUS.value == "modulus"
+    assert CalculationType.ROOT.value == "root"
+    assert CalculationType.INTEGER_DIVISION.value == "integer_division"
+    assert CalculationType.PERCENTAGE.value == "percentage"
+    assert CalculationType.ABSOLUTE_DIFFERENCE.value == "abs_difference"
 
 
 def test_calculation_base_valid_addition():
@@ -53,7 +59,7 @@ def test_calculation_base_case_insensitive_type():
 def test_calculation_base_invalid_type():
 
     data = {
-        "type": "modulus",  # Invalid type
+        "type": "dummy",  # Invalid type
         "inputs": [10, 3]
     }
     with pytest.raises(ValidationError) as exc_info:

@@ -12,11 +12,17 @@ class CalculationType(str, Enum):
     SUBTRACTION = "subtraction"
     MULTIPLICATION = "multiplication"
     DIVISION = "division"
+    POWER = "power"
+    MODULUS = "modulus"
+    ROOT = "root"
+    INTEGER_DIVISION = "integer_division"
+    PERCENTAGE = "percentage"
+    ABSOLUTE_DIFFERENCE = "abs_difference"
 
 class CalculationBase(BaseModel):
     type: CalculationType = Field(
         ...,
-        description="Type of calculation (addition, subtraction, multiplication, division)",
+        description="Type of calculation (addition, subtraction, multiplication, division, power, modulus)",
         example="addition"
     )
     inputs: List[float] = Field(
@@ -44,9 +50,17 @@ class CalculationBase(BaseModel):
     @model_validator(mode='after')
     def validate_inputs(self) -> "CalculationBase":
         """Validate inputs based on calculation type"""
-        if len(self.inputs) < 2:
-            raise ValueError("At least two numbers are required for calculation")
-        if self.type == CalculationType.DIVISION:
+        two_input_only = {
+            CalculationType.POWER, CalculationType.ROOT, CalculationType.MODULUS,
+            CalculationType.ABSOLUTE_DIFFERENCE, CalculationType.PERCENTAGE,
+        }
+        if self.type in two_input_only:
+            if len(self.inputs) != 2:
+                raise ValueError(f"{self.type.value.replace('_', ' ').title()} requires exactly 2 input values.")
+        else:
+            if len(self.inputs) < 2:
+                raise ValueError("At least two numbers are required for calculation")
+        if self.type in [CalculationType.DIVISION, CalculationType.MODULUS, CalculationType.ROOT, CalculationType.INTEGER_DIVISION, CalculationType.PERCENTAGE]:
             # Prevent division by zero (skip the first value as numerator)
             if any(x == 0 for x in self.inputs[1:]):
                 raise ValueError("Cannot divide by zero")
@@ -112,12 +126,18 @@ class CalculationUpdate(BaseModel):
         Important: Only validate what's provided.
         """
         if self.inputs is not None:
-            if len(self.inputs) < 2:
-                raise ValueError("At least two numbers are required for calculation")
+            two_input_only = {
+                CalculationType.POWER, CalculationType.ROOT, CalculationType.MODULUS,
+                CalculationType.ABSOLUTE_DIFFERENCE, CalculationType.PERCENTAGE,
+            }
+            if self.type in two_input_only:
+                if len(self.inputs) != 2:
+                    raise ValueError(f"{self.type.value.replace('_', ' ').title()} requires exactly 2 input values.")
+            else:
+                if len(self.inputs) < 2:
+                    raise ValueError("At least two numbers are required for calculation")
 
-            # If type is provided OR defaults to division from DB later,
-            # we only enforce division rule if type is explicitly given here
-            if self.type == CalculationType.DIVISION:
+            if self.type in [CalculationType.DIVISION, CalculationType.MODULUS, CalculationType.ROOT, CalculationType.INTEGER_DIVISION, CalculationType.PERCENTAGE]:
                 if any(x == 0 for x in self.inputs[1:]):
                     raise ValueError("Cannot divide by zero")
 

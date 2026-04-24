@@ -7,6 +7,12 @@ from app.models.calculation import (
     Subtraction,
     Multiplication,
     Division,
+    Power,
+    Root,
+    Modulus,
+    IntegerDivision,
+    AbsoluteDifference,
+    Percentage
 )
 
 
@@ -50,6 +56,117 @@ def test_division_by_zero():
     division = Division(user_id=dummy_user_id(), inputs=inputs)
     with pytest.raises(ValueError, match="Cannot divide by zero."):
         division.get_result()
+
+
+def test_modulus_get_result():
+    inputs = [100, 2]
+    modulus = Modulus(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: 100 % 2 = 0
+    result = modulus.get_result()
+    assert result == 0, f"Expected 0, got {result}"
+
+
+def test_modulus_by_zero():
+    inputs = [50, 0]
+    modulus = Modulus(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        modulus.get_result()
+
+
+def test_modulus_invalid_input():
+    inputs = [50, 10, 23]
+    modulus = Modulus(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Modulus requires exactly two numbers."):
+        modulus.get_result()
+
+
+def test_power_get_result():
+    inputs = [2, 2]
+    power = Power(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: 2 ^ 2 = 4
+    result = power.get_result()
+    assert result == 4, f"Expected 4, got {result}"
+
+
+def test_power_invalid_input():
+    inputs = [50, 10, 2]
+    power = Power(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Power requires exactly two numbers."):
+        power.get_result()
+
+
+def test_root_get_result():
+    inputs = [100, 2]
+    root = Root(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: 100 ^ (1/2) = 10
+    result = root.get_result()
+    assert result == 10, f"Expected 10, got {result}"
+
+
+def test_root_by_zero():
+    inputs = [50, 0]
+    root = Root(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        root.get_result()
+
+
+def test_root_invalid_input():
+    inputs = [50, 10, 23]
+    root = Root(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Root requires exactly two numbers."):
+        root.get_result()
+
+
+def test_integer_division_get_result():
+    inputs = [3, 2]
+    integer_division = IntegerDivision(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: 3 // 2 = 1
+    result = integer_division.get_result()
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_integer_division_by_zero():
+    inputs = [50, 0]
+    integer_division = IntegerDivision(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        integer_division.get_result()
+
+
+def test_percentage_get_result():
+    inputs = [3, 4]
+    percentage = Percentage(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: (3 / 4) * 100 = 75
+    result = percentage.get_result()
+    assert result == 75, f"Expected 75, got {result}"
+
+
+def test_percentage_by_zero():
+    inputs = [50, 0]
+    percentage = Percentage(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Cannot divide by zero."):
+        percentage.get_result()
+
+
+def test_percentage_invalid_input():
+    inputs = [50, 10, 23]
+    percentage = Percentage(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Percentage requires exactly two numbers."):
+        percentage.get_result()
+
+
+def test_abs_difference_get_result():
+    inputs = [3, 4]
+    abs_difference = AbsoluteDifference(user_id=dummy_user_id(), inputs=inputs)
+    # Expected: |3 - 4| = 1
+    result = abs_difference.get_result()
+    assert result == 1, f"Expected 1, got {result}"
+
+
+def test_abs_difference_invalid_input():
+    inputs = [50, 10, 23]
+    abs_difference = AbsoluteDifference(user_id=dummy_user_id(), inputs=inputs)
+    with pytest.raises(ValueError, match="Absolute difference requires exactly two numbers."):
+        abs_difference.get_result()
 
 
 def test_calculation_factory_addition():
@@ -110,7 +227,7 @@ def test_calculation_factory_division():
 def test_calculation_factory_invalid_type():
     with pytest.raises(ValueError, match="Unsupported calculation type"):
         Calculation.create(
-            calculation_type='modulus',  # unsupported type
+            calculation_type='dummy',  # unsupported type
             user_id=dummy_user_id(),
             inputs=[10, 3],
         )
@@ -131,10 +248,55 @@ def test_calculation_factory_case_insensitive():
         assert calc.get_result() == 8
 
 
-def test_invalid_inputs_for_addition():
+def test_invalid_input_type_for_addition():
     addition = Addition(user_id=dummy_user_id(), inputs="not-a-list")
     with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
         addition.get_result()
+
+def test_invalid_input_type_for_subtraction():
+    subtraction = Subtraction(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        subtraction.get_result()
+
+def test_invalid_input_type_for_multiplication():
+    multiplication = Multiplication(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        multiplication.get_result()
+
+def test_invalid_input_type_for_division():
+    division = Division(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        division.get_result()
+
+def test_invalid_input_type_for_power():
+    power = Power(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        power.get_result()
+
+def test_invalid_input_type_for_modulus():
+    modulus = Modulus(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        modulus.get_result()
+
+def test_invalid_input_type_for_root():
+    root = Root(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        root.get_result()
+
+def test_invalid_input_type_for_percentage():
+    percentage = Percentage(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        percentage.get_result()
+
+def test_invalid_input_type_for_abs_difference():
+    abs_difference = AbsoluteDifference(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        abs_difference.get_result()
+
+def test_invalid_input_type_for_integer_divsion():
+    integer_divsion = IntegerDivision(user_id=dummy_user_id(), inputs="not-a-list")
+    with pytest.raises(ValueError, match="Inputs must be a list of numbers."):
+        integer_divsion.get_result()
 
 
 def test_invalid_inputs_for_subtraction():

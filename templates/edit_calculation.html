@@ -87,30 +87,33 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Left Column -->
         <div class="space-y-5">
-          <!-- Type (read-only) -->
+          <!-- Type (editable) -->
           <div>
             <label for="calcType" class="block text-sm font-medium text-gray-700 mb-1">Operation Type</label>
             <div class="relative">
-              <input 
-                type="text" 
-                id="calcType" 
-                name="type" 
-                readonly
-                class="block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm 
+              <select
+                id="calcType"
+                name="type"
+                class="block w-full rounded-md border-gray-300 shadow-sm
                       focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
-              />
+              >
+                <option value="addition">Addition</option>
+                <option value="subtraction">Subtraction</option>
+                <option value="multiplication">Multiplication</option>
+                <option value="division">Division</option>
+                <option value="power">Power</option>
+                <option value="modulus">Modulus</option>
+                <option value="root">Root</option>
+                <option value="integer_division">Integer Division</option>
+                <option value="abs_difference">Absolute Difference</option>
+                <option value="percentage">Percentage</option>
+              </select>
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                 </svg>
               </div>
             </div>
-            <p class="text-sm text-gray-500 mt-1 flex items-center">
-              <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              Operation type cannot be changed once created.
-            </p>
           </div>
 
           <!-- Inputs -->
@@ -264,6 +267,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Get calc ID from Jinja context
+  const CALC_TYPE_LABELS = {
+    addition: 'Addition', subtraction: 'Subtraction', multiplication: 'Multiplication',
+    division: 'Division', power: 'Power', modulus: 'Modulus', root: 'Root',
+    integer_division: 'Integer Division', abs_difference: 'Absolute Difference', percentage: 'Percentage',
+  };
+
   const calcId = "{{ calc_id }}";
   const calcTypeInput = document.getElementById('calcType');
   const calcInputsInput = document.getElementById('calcInputs');
@@ -282,23 +291,41 @@ document.addEventListener('DOMContentLoaded', async () => {
         result = inputs.reduce((a, b) => a + b, 0);
         break;
       case 'subtraction':
-        result = inputs.reduce((a, b, i) => i === 0 ? a : a - b, inputs[0]);
+        result = inputs.slice(1).reduce((a, b) => a - b, inputs[0]);
         break;
       case 'multiplication':
         result = inputs.reduce((a, b) => a * b, 1);
         break;
       case 'division':
-        // Avoid division by zero
-        if (inputs.some((value, index) => index > 0 && value === 0)) {
-          return 'Cannot divide by zero';
-        }
-        result = inputs.reduce((a, b, i) => i === 0 ? a : a / b, inputs[0]);
+        if (inputs.some((v, i) => i > 0 && v === 0)) return 'Cannot divide by zero';
+        result = inputs.slice(1).reduce((a, b) => a / b, inputs[0]);
+        break;
+      case 'power':
+        result = inputs.slice(1).reduce((a, b) => Math.pow(a, b), inputs[0]);
+        break;
+      case 'modulus':
+        if (inputs.some((v, i) => i > 0 && v === 0)) return 'Cannot divide by zero';
+        result = inputs.slice(1).reduce((a, b) => a % b, inputs[0]);
+        break;
+      case 'root':
+        if (inputs.some((v, i) => i > 0 && v === 0)) return 'Cannot divide by zero';
+        result = inputs.slice(1).reduce((a, b) => Math.pow(a, 1 / b), inputs[0]);
+        break;
+      case 'integer_division':
+        if (inputs.some((v, i) => i > 0 && v === 0)) return 'Cannot divide by zero';
+        result = inputs.slice(1).reduce((a, b) => Math.trunc(a / b), inputs[0]);
+        break;
+      case 'percentage':
+        if (inputs[1] === 0) return 'Cannot divide by zero';
+        result = (inputs[0] / inputs[1]) * 100;
+        break;
+      case 'abs_difference':
+        result = inputs.slice(1).reduce((a, b) => Math.abs(a - b), inputs[0]);
         break;
       default:
         return 'Unknown operation';
     }
     
-    // Format the result nicely
     return typeof result === 'number' ? 
       (Math.abs(result) < 0.0001 && result !== 0) ? 
         result.toExponential(4) : 
@@ -315,23 +342,19 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(num => parseFloat(num.trim()))
       .filter(num => !isNaN(num));
     
-    // Create appropriate operator symbol
     let operator;
     switch (type) {
-      case 'addition':
-        operator = '+';
-        break;
-      case 'subtraction':
-        operator = '-';
-        break;
-      case 'multiplication':
-        operator = '×';
-        break;
-      case 'division':
-        operator = '÷';
-        break;
-      default:
-        operator = '?';
+      case 'addition':        operator = '+';   break;
+      case 'subtraction':     operator = '−';   break;
+      case 'multiplication':  operator = '×';   break;
+      case 'division':        operator = '÷';   break;
+      case 'power':           operator = '^';   break;
+      case 'modulus':         operator = 'mod'; break;
+      case 'root':            operator = '√';   break;
+      case 'integer_division':operator = '//';  break;
+      case 'percentage':      operator = '%';   break;
+      case 'abs_difference':  operator = '|−|'; break;
+      default:                operator = '?';
     }
     
     // Update preview section
@@ -414,6 +437,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Add input handler to update preview on typing
   calcInputsInput.addEventListener('input', updatePreview);
+  calcTypeInput.addEventListener('change', () => {
+    updatePreview();
+    const twoOnly = ['power', 'root', 'modulus', 'abs_difference', 'percentage'];
+    const helpEl = document.getElementById('inputHelp');
+    if (helpEl) {
+      helpEl.textContent = twoOnly.includes(calcTypeInput.value)
+        ? 'Enter exactly 2 numbers separated by a comma.'
+        : 'Enter two or more numbers separated by commas.';
+    }
+  });
 
   // 2) Submit the edited calculation
   editForm.addEventListener('submit', async (e) => {
@@ -429,14 +462,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(num => parseFloat(num.trim()))
       .filter(num => !isNaN(num));
 
-    // Validate inputs
-    if (newInputs.length < 2) {
-      showError('Please enter at least two valid numbers separated by commas.');
+    // Validate input count based on calculation type
+    const twoInputOnly = ['power', 'root', 'modulus', 'abs_difference', 'percentage'];
+    const currentType = calcTypeInput.value;
+    let inputCountError = null;
+    if (twoInputOnly.includes(currentType)) {
+      if (newInputs.length !== 2) inputCountError = `"${CALC_TYPE_LABELS[currentType] || currentType}" requires exactly 2 input values.`;
+    } else {
+      if (newInputs.length < 2) inputCountError = 'Please enter at least two valid numbers separated by commas.';
+    }
+
+    if (inputCountError) {
+      showError(inputCountError);
       
       // Add error class to the input
       calcInputsInput.classList.add('border-red-500', 'bg-red-50');
       document.getElementById('inputHelp').classList.add('text-red-500');
-      document.getElementById('inputHelp').textContent = 'At least two valid numbers are required.';
+      document.getElementById('inputHelp').textContent = inputCountError;
       
       // Focus the input
       calcInputsInput.focus();
@@ -445,21 +487,22 @@ document.addEventListener('DOMContentLoaded', async () => {
       setTimeout(() => {
         calcInputsInput.classList.remove('border-red-500', 'bg-red-50');
         document.getElementById('inputHelp').classList.remove('text-red-500');
-        document.getElementById('inputHelp').textContent = 'Enter two or more numbers separated by commas.';
+        document.getElementById('inputHelp').textContent = 'Enter the required numbers separated by commas.';
       }, 3000);
       
       calcInputsInput.addEventListener('input', function removeErrorOnce() {
         calcInputsInput.classList.remove('border-red-500', 'bg-red-50');
         document.getElementById('inputHelp').classList.remove('text-red-500');
-        document.getElementById('inputHelp').textContent = 'Enter two or more numbers separated by commas.';
+        document.getElementById('inputHelp').textContent = 'Enter the required numbers separated by commas.';
         calcInputsInput.removeEventListener('input', removeErrorOnce);
       });
       
       return;
     }
     
-    // Check for division by zero
-    if (calcTypeInput.value === 'division' && newInputs.some((value, index) => index > 0 && value === 0)) {
+    // Check for division by zero for relevant types
+    const divByZeroTypes = ['division', 'modulus', 'root', 'integer_division', 'percentage'];
+    if (divByZeroTypes.includes(calcTypeInput.value) && newInputs.some((v, i) => i > 0 && v === 0)) {
       showError('Division by zero is not allowed.');
       return;
     }
@@ -475,7 +518,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ inputs: newInputs })
+        body: JSON.stringify({ type: calcTypeInput.value, inputs: newInputs })
       });
 
       if (!response.ok) {

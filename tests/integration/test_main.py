@@ -177,7 +177,7 @@ def test_main_create_division_by_zero_returns_422(client, base_url):
 def test_main_create_calculation_invalid_type_returns_422(client, base_url):
     _, token = _user_and_token(client, base_url)
     r = client.post(f"{base_url}/calculations",
-                      json={"type": "modulus", "inputs": [10, 3]},
+                      json={"type": "dummy", "inputs": [10, 3]},
                       headers={"Authorization": f"Bearer {token}"})
     assert r.status_code == 422
 
