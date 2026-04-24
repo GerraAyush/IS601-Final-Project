@@ -384,3 +384,193 @@ def test_delete_not_found(client, base_url):
     fake_id = "11111111-1111-1111-1111-111111111111"
     response = client.delete(f"/calculations/{fake_id}", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 404
+
+
+# ===========================================================================
+# /users/me — GET, PUT profile, PUT password  (covers main.py lines 267-309)
+# ===========================================================================
+
+def test_main_get_users_me(client, base_url):
+    """GET /users/me returns the authenticated user's profile."""
+    data, token = _user_and_token(client, base_url)
+    r = client.get(f"{base_url}/users/me",
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["username"] == data["username"]
+    assert body["email"] == data["email"]
+
+
+def test_main_get_users_me_unauthenticated(client, base_url):
+    """GET /users/me without a token returns 401."""
+    r = client.get(f"{base_url}/users/me")
+    assert r.status_code == 401
+
+
+def test_main_update_users_me_first_name(client, base_url):
+    """PUT /users/me updates the user's first name."""
+    data, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me",
+                   json={"first_name": "Updated"},
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json()["first_name"] == "Updated"
+
+
+def test_main_update_users_me_last_name(client, base_url):
+    """PUT /users/me updates the user's last name."""
+    data, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me",
+                   json={"last_name": "Newlast"},
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json()["last_name"] == "Newlast"
+
+
+def test_main_update_users_me_email(client, base_url):
+    """PUT /users/me updates the user's email."""
+    data, token = _user_and_token(client, base_url)
+    new_email = f"updated_{uuid4().hex[:6]}@example.com"
+    r = client.put(f"{base_url}/users/me",
+                   json={"email": new_email},
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json()["email"] == new_email
+
+
+def test_main_update_users_me_no_fields_returns_400(client, base_url):
+    """PUT /users/me with empty body returns 400."""
+    _, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me",
+                   json={},
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 400
+    assert "No fields provided" in r.json()["detail"]
+
+
+def test_main_update_users_me_duplicate_email_returns_400(client, base_url):
+    """PUT /users/me with an email already used by another account returns 400."""
+    data1, token1 = _user_and_token(client, base_url)
+    data2, _      = _user_and_token(client, base_url)
+
+    r = client.put(f"{base_url}/users/me",
+                   json={"email": data2["email"]},
+                   headers={"Authorization": f"Bearer {token1}"})
+    assert r.status_code == 400
+    assert "already in use" in r.json()["detail"]
+
+
+def test_main_update_users_me_unauthenticated(client, base_url):
+    """PUT /users/me without token returns 401."""
+    r = client.put(f"{base_url}/users/me", json={"first_name": "X"})
+    assert r.status_code == 401
+
+
+def test_main_update_password_success(client, base_url):
+    """PUT /users/me/password with correct credentials returns 204."""
+    data, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me/password",
+                   json={
+                       "current_password":     data["password"],
+                       "new_password":         "NewSecure456!",
+                       "confirm_new_password": "NewSecure456!",
+                   },
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 204
+
+
+def test_main_update_password_wrong_current_returns_400(client, base_url):
+    """PUT /users/me/password with wrong current password returns 400."""
+    _, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me/password",
+                   json={
+                       "current_password":     "WrongPass999!",
+                       "new_password":         "NewSecure456!",
+                       "confirm_new_password": "NewSecure456!",
+                   },
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 400
+    assert "incorrect" in r.json()["detail"].lower()
+
+
+def test_main_update_password_mismatch_returns_422(client, base_url):
+    """PUT /users/me/password with mismatched new passwords returns 422."""
+    data, token = _user_and_token(client, base_url)
+    r = client.put(f"{base_url}/users/me/password",
+                   json={
+                       "current_password":     data["password"],
+                       "new_password":         "NewSecure456!",
+                       "confirm_new_password": "Different456!",
+                   },
+                   headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 422
+
+
+def test_main_update_password_unauthenticated(client, base_url):
+    """PUT /users/me/password without token returns 401."""
+    r = client.put(f"{base_url}/users/me/password",
+                   json={
+                       "current_password":     "OldPass123!",
+                       "new_password":         "NewPass456!",
+                       "confirm_new_password": "NewPass456!",
+                   })
+    assert r.status_code == 401
+
+
+# ===========================================================================
+# create_calculation — ValueError branch (main.py lines 344-346)
+# ===========================================================================
+
+def test_main_create_calculation_value_error_returns_400(client, base_url):
+    """Creating a calculation whose get_result() raises ValueError returns 400."""
+    from unittest.mock import patch
+    _, token = _user_and_token(client, base_url)
+
+    with patch("app.models.calculation.Addition.get_result",
+               side_effect=ValueError("forced error")):
+        r = client.post(f"{base_url}/calculations",
+                        json={"type": "addition", "inputs": [1, 2]},
+                        headers={"Authorization": f"Bearer {token}"})
+
+    assert r.status_code == 400
+    assert "forced error" in r.json()["detail"]
+
+
+# ===========================================================================
+# Web page routes — HTML 200s  (covers main.py lines 42-45, 128, 145, 151)
+# ===========================================================================
+
+def test_main_index_page(client, base_url):
+    r = client.get(f"{base_url}/")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+
+
+def test_main_login_page(client, base_url):
+    r = client.get(f"{base_url}/login")
+    assert r.status_code == 200
+
+
+def test_main_register_page(client, base_url):
+    r = client.get(f"{base_url}/register")
+    assert r.status_code == 200
+
+
+def test_main_dashboard_page(client, base_url):
+    r = client.get(f"{base_url}/dashboard")
+    assert r.status_code == 200
+
+
+def test_main_view_calculation_page(client, base_url):
+    r = client.get(f"{base_url}/dashboard/view/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 200
+
+
+def test_main_edit_calculation_page(client, base_url):
+    r = client.get(f"{base_url}/dashboard/edit/00000000-0000-0000-0000-000000000000")
+    assert r.status_code == 200
+
+
+def test_main_edit_profile_page(client, base_url):
+    r = client.get(f"{base_url}/dashboard/edit-profile")
+    assert r.status_code == 200

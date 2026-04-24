@@ -242,3 +242,60 @@ async def test_is_blacklisted_returns_false_when_absent():
         result = await is_blacklisted("unknown-jti")
 
     assert result == 0
+
+
+# ===========================================================================
+# redis.py — exception / unavailable branches (lines 15-17, 24, 26-27, 33)
+# ===========================================================================
+
+@pytest.mark.asyncio
+async def test_get_redis_unavailable_returns_none():
+    """When aioredis.from_url raises, get_redis returns None instead of crashing."""
+    if hasattr(redis_module.get_redis, "redis"):
+        del redis_module.get_redis.redis
+
+    with patch("aioredis.from_url", new=AsyncMock(side_effect=ConnectionError("no redis"))):
+        result = await redis_module.get_redis()
+
+    assert result is None
+
+    # Cleanup so future tests can get a fresh connection
+    if hasattr(redis_module.get_redis, "redis"):
+        del redis_module.get_redis.redis
+
+
+@pytest.mark.asyncio
+async def test_add_to_blacklist_no_op_when_redis_none():
+    """add_to_blacklist silently no-ops when Redis is unavailable."""
+    with patch("app.auth.redis.get_redis", new=AsyncMock(return_value=None)):
+        # Must not raise
+        await add_to_blacklist("jti-xyz", 300)
+
+
+@pytest.mark.asyncio
+async def test_add_to_blacklist_exception_is_swallowed():
+    """add_to_blacklist swallows exceptions from Redis operations."""
+    mock_conn = AsyncMock()
+    mock_conn.set.side_effect = OSError("redis write error")
+    with patch("app.auth.redis.get_redis", new=AsyncMock(return_value=mock_conn)):
+        await add_to_blacklist("jti-err", 300)  # must not raise
+
+
+@pytest.mark.asyncio
+async def test_is_blacklisted_returns_false_when_redis_none():
+    """is_blacklisted returns False (fail open) when Redis is unavailable."""
+    with patch("app.auth.redis.get_redis", new=AsyncMock(return_value=None)):
+        result = await is_blacklisted("jti-xyz")
+
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_is_blacklisted_returns_false_on_exception():
+    """is_blacklisted returns False when the Redis call raises an exception."""
+    mock_conn = AsyncMock()
+    mock_conn.exists.side_effect = OSError("redis read error")
+    with patch("app.auth.redis.get_redis", new=AsyncMock(return_value=mock_conn)):
+        result = await is_blacklisted("jti-err")
+
+    assert result is False

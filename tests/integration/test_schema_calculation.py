@@ -361,3 +361,46 @@ def test_update_type_case_insensitive():
     assert obj.type == "addition"
     assert obj.inputs == [1, 2]
     
+
+# ===========================================================================
+# Missing coverage: schema lines 58-59, 116, 134-135
+# ===========================================================================
+
+def test_calculation_base_two_input_only_rejects_three(
+):
+    """CalculationBase raises when a two-input-only type gets 3 inputs (line 58-59)."""
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationBase(type="power", inputs=[2, 3, 4])
+    assert any("exactly 2" in str(e) for e in exc_info.value.errors())
+
+
+def test_calculation_base_two_input_only_rejects_one():
+    """CalculationBase raises when a two-input-only type gets 1 input (line 58-59)."""
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationBase(type="modulus", inputs=[7])
+    assert len(exc_info.value.errors()) > 0
+
+
+def test_calculation_update_invalid_type_raises(
+):
+    """CalculationUpdate rejects an invalid type string (line 116)."""
+    with pytest.raises(ValidationError) as exc_info:
+        from app.schemas.calculation import CalculationUpdate
+        CalculationUpdate(type="unsupported_xyz", inputs=[1, 2])
+    assert len(exc_info.value.errors()) > 0
+
+
+def test_calculation_update_two_input_only_rejects_three():
+    """CalculationUpdate raises when a two-input-only type gets 3 inputs (line 134)."""
+    from app.schemas.calculation import CalculationUpdate
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationUpdate(type="percentage", inputs=[10, 20, 30])
+    assert any("exactly 2" in str(e) for e in exc_info.value.errors())
+
+
+def test_calculation_update_standard_type_rejects_one_input():
+    """CalculationUpdate raises when a standard type gets only 1 input (line 135)."""
+    from app.schemas.calculation import CalculationUpdate
+    with pytest.raises(ValidationError) as exc_info:
+        CalculationUpdate(type="addition", inputs=[5])
+    assert len(exc_info.value.errors()) > 0

@@ -22,7 +22,18 @@
       </p>
       
       <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-        <a href="{{ url_for('login_page') }}" 
+        <!-- Dashboard button shown only when logged in (set by JS below) -->
+        <a id="dashboardBtn" href="/dashboard"
+           class="hidden bg-green-600 text-white px-8 py-3 rounded-md hover:bg-green-700 transition-colors duration-200
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 font-medium
+                 flex items-center w-full sm:w-auto justify-center">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          Go to Dashboard
+        </a>
+        <a href="{{ url_for('login_page') }}" id="loginBtn"
            class="bg-blue-700 text-white px-8 py-3 rounded-md hover:bg-blue-800 transition-colors duration-200
                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 font-medium
                  flex items-center w-full sm:w-auto justify-center">
@@ -32,7 +43,7 @@
           </svg>
           Login
         </a>
-        <a href="{{ url_for('register_page') }}" 
+        <a href="{{ url_for('register_page') }}" id="registerBtn"
            class="bg-gray-100 text-gray-800 border border-gray-300 px-8 py-3 rounded-md hover:bg-gray-200 
                  transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 
                  focus:ring-gray-500 font-medium flex items-center w-full sm:w-auto justify-center">
@@ -132,13 +143,19 @@
       Join now and start organizing all your calculations in one place.
     </p>
     <div class="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-      <a href="{{ url_for('register_page') }}" 
+      <a id="ctaDashboardBtn" href="/dashboard"
+         class="hidden bg-white text-green-700 px-8 py-3 rounded-md hover:bg-gray-100 transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white font-medium
+               flex items-center w-full sm:w-auto justify-center">
+        Go to Dashboard
+      </a>
+      <a id="ctaRegisterBtn" href="{{ url_for('register_page') }}" 
          class="bg-white text-blue-700 px-8 py-3 rounded-md hover:bg-gray-100 transition-colors duration-200
                focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white font-medium
                flex items-center w-full sm:w-auto justify-center">
         Create Free Account
       </a>
-      <a href="{{ url_for('login_page') }}" 
+      <a id="ctaLoginBtn" href="{{ url_for('login_page') }}" 
          class="bg-transparent text-white border border-white px-8 py-3 rounded-md hover:bg-blue-600 
                transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 
                focus:ring-white font-medium flex items-center w-full sm:w-auto justify-center">
@@ -148,15 +165,18 @@
   </div>
 </div>
 
-<!-- Hide footer login/register links if showing on homepage -->
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // If there are footer auth links and we're on the homepage, hide them
-    const footerAuthLinks = document.querySelectorAll('footer a[href*="login"], footer a[href*="register"]');
-    if (footerAuthLinks.length) {
-      footerAuthLinks.forEach(link => {
-        link.style.display = 'none';
-      });
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      // User is logged in — show dashboard button, hide login/register in hero
+      document.getElementById('dashboardBtn')?.classList.remove('hidden');
+      document.getElementById('loginBtn')?.classList.add('hidden');
+      document.getElementById('registerBtn')?.classList.add('hidden');
+      // Bottom CTA
+      document.getElementById('ctaDashboardBtn')?.classList.remove('hidden');
+      document.getElementById('ctaRegisterBtn')?.classList.add('hidden');
+      document.getElementById('ctaLoginBtn')?.classList.add('hidden');
     }
   });
 </script>

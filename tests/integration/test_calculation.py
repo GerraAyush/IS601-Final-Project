@@ -424,3 +424,21 @@ def test_minimum_valid_inputs_all_classes():
     assert Multiplication(user_id=user_id, inputs=[2, 3]).get_result() == 6
     assert Division(user_id=user_id, inputs=[10, 2]).get_result() == 5
     
+
+# ===========================================================================
+# Missing coverage: single-input raises for Addition (line 118) and
+# IntegerDivision (line 202)
+# ===========================================================================
+
+def test_addition_single_input_raises():
+    """Addition with fewer than 2 inputs raises ValueError (covers line 118)."""
+    addition = Addition(user_id=dummy_user_id(), inputs=[5])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        addition.get_result()
+
+
+def test_integer_division_single_input_raises():
+    """IntegerDivision with fewer than 2 inputs raises ValueError (covers line 202)."""
+    intdiv = IntegerDivision(user_id=dummy_user_id(), inputs=[10])
+    with pytest.raises(ValueError, match="at least two numbers"):
+        intdiv.get_result()

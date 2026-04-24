@@ -145,6 +145,11 @@ def edit_calculation_page(request: Request, calc_id: str):
     return templates.TemplateResponse(request, name="edit_calculation.html", context={"request": request, "calc_id": calc_id})
 
 
+@app.get("/dashboard/edit-profile", response_class=HTMLResponse, tags=["web"])
+def edit_profile_page(request: Request):
+    """Profile editing page."""
+    return templates.TemplateResponse(request, name="edit_profile.html", context={"request": request})
+
 # ------------------------------------------------------------------------------
 # Health Endpoint
 # ------------------------------------------------------------------------------
@@ -237,6 +242,71 @@ def login_form(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = D
         "access_token": auth_result["access_token"],
         "token_type": "bearer"
     }
+
+
+# ------------------------------------------------------------------------------
+# User Profile Endpoints
+# ------------------------------------------------------------------------------
+from app.schemas.user import UserUpdate, UserResponse, PasswordUpdate
+
+@app.get("/users/me", response_model=UserResponse, tags=["users"])
+def get_current_user_profile(
+    current_user = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Get the current authenticated user's profile."""
+    return current_user
+
+@app.put("/users/me", response_model=UserResponse, tags=["users"])
+def update_current_user_profile(
+    user_update: UserUpdate,
+    current_user = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Update the current authenticated user's profile."""
+    try:
+        update_data = user_update.model_dump(exclude_none=True)
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields provided to update.")
+        # Check for duplicate email/username
+        from app.models.user import User
+        from sqlalchemy import or_
+        if "email" in update_data or "username" in update_data:
+            filters = []
+            if "email" in update_data:
+                filters.append(User.email == update_data["email"])
+            if "username" in update_data:
+                filters.append(User.username == update_data["username"])
+            conflict = db.query(User).filter(
+                or_(*filters),
+                User.id != current_user.id
+            ).first()
+            if conflict:
+                raise HTTPException(status_code=400, detail="Email or username already in use.")
+        current_user.update(**update_data)
+        db.commit()
+        db.refresh(current_user)
+        return current_user
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/users/me/password", status_code=status.HTTP_204_NO_CONTENT, tags=["users"])
+def update_current_user_password(
+    password_update: PasswordUpdate,
+    current_user = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    """Update the current authenticated user's password."""
+    if not current_user.verify_password(password_update.current_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
+    from app.models.user import User
+    current_user.password = User.hash_password(password_update.new_password)
+    current_user.updated_at = __import__('datetime').datetime.utcnow()
+    db.commit()
+    return None
 
 
 # ------------------------------------------------------------------------------

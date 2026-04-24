@@ -1,0 +1,551 @@
+{% extends "layout.html" %}
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<!-- Error/Success Alerts -->
+<div
+  id="errorAlert"
+  class="hidden bg-red-100 border border-red-500 text-red-800
+         px-4 py-3 rounded-md mb-4 transition-all duration-300"
+>
+  <div class="flex items-center">
+    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+    </svg>
+    <span id="errorMessage" class="block sm:inline"></span>
+  </div>
+</div>
+<div
+  id="successAlert"
+  class="hidden bg-green-100 border border-green-500 text-green-800
+         px-4 py-3 rounded-md mb-4 transition-all duration-300"
+>
+  <div class="flex items-center">
+    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+    </svg>
+    <span id="successMessage" class="block sm:inline"></span>
+  </div>
+</div>
+
+<!-- Breadcrumb Navigation -->
+<nav class="flex mb-4" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1 md:space-x-3">
+    <li class="inline-flex items-center">
+      <a href="/dashboard" class="text-gray-700 hover:text-blue-700 inline-flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        Dashboard
+      </a>
+    </li>
+    <li>
+      <div class="flex items-center">
+        <svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+        </svg>
+        <span class="text-gray-500 ml-1 md:ml-2 font-medium">Edit Profile</span>
+      </div>
+    </li>
+  </ol>
+</nav>
+
+<!-- Loading State -->
+<div id="loadingState" class="bg-white shadow-lg rounded-lg p-6 flex justify-center items-center min-h-[300px]">
+  <div class="flex flex-col items-center">
+    <svg class="animate-spin h-10 w-10 text-blue-700 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="text-gray-600">Loading profile...</p>
+  </div>
+</div>
+
+<!-- Profile Card -->
+<div id="profileCard" class="hidden space-y-6">
+
+  <!-- Profile Info Form -->
+  <div class="bg-white shadow-lg rounded-lg border border-gray-100">
+    <div class="bg-gray-50 rounded-t-lg px-6 py-4 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+        </svg>
+        Profile Information
+      </h2>
+    </div>
+    <div class="p-6">
+      <form id="profileForm" class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Left column: editable fields -->
+          <div class="space-y-5">
+            <!-- Username (read-only) -->
+            <div>
+              <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+              <div class="relative">
+                <input
+                  type="text" id="username" name="username" readonly
+                  class="block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-sm text-gray-500 mt-1">Username cannot be changed.</p>
+            </div>
+
+            <!-- Email -->
+            <div>
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+              <div class="relative">
+                <input
+                  type="email" id="email" name="email"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- First Name -->
+            <div>
+              <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <div class="relative">
+                <input
+                  type="text" id="first_name" name="first_name"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- Last Name -->
+            <div>
+              <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+              <div class="relative">
+                <input
+                  type="text" id="last_name" name="last_name"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right column: account info panel -->
+          <div class="p-6 bg-gray-50 rounded-lg border border-gray-100 flex flex-col justify-between">
+            <div>
+              <h3 class="text-lg font-semibold text-gray-700 mb-4 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Account Details
+              </h3>
+              <dl class="space-y-3 text-sm">
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 font-medium">Status</dt>
+                  <dd id="statusBadge"></dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 font-medium">Verified</dt>
+                  <dd id="verifiedBadge"></dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 font-medium">Member since</dt>
+                  <dd id="createdAt" class="text-gray-700"></dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 font-medium">Last updated</dt>
+                  <dd id="updatedAt" class="text-gray-700"></dd>
+                </div>
+                <div class="flex justify-between">
+                  <dt class="text-gray-500 font-medium">Last login</dt>
+                  <dd id="lastLogin" class="text-gray-700"></dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button
+            type="submit"
+            class="bg-blue-700 text-white px-6 py-2 rounded-md hover:bg-blue-800 transition-colors duration-200
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Save Changes
+          </button>
+          <a
+            href="/dashboard"
+            class="bg-gray-700 text-white px-6 py-2 rounded-md hover:bg-gray-800 transition-colors duration-200
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Change Password Card -->
+  <div class="bg-white shadow-lg rounded-lg border border-gray-100">
+    <div class="bg-gray-50 rounded-t-lg px-6 py-4 border-b border-gray-100">
+      <h2 class="text-xl font-bold text-gray-800 flex items-center">
+        <svg class="w-5 h-5 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg>
+        Change Password
+      </h2>
+    </div>
+    <div class="p-6">
+      <form id="passwordForm" class="space-y-5">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-5">
+            <!-- Current Password -->
+            <div>
+              <label for="current_password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+              <div class="relative">
+                <input
+                  type="password" id="current_password" name="current_password"
+                  placeholder="Enter your current password"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <!-- New Password -->
+            <div>
+              <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+              <div class="relative">
+                <input
+                  type="password" id="new_password" name="new_password"
+                  placeholder="Enter new password"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">Min. 8 chars, upper &amp; lowercase, number, special character.</p>
+            </div>
+
+            <!-- Confirm New Password -->
+            <div>
+              <label for="confirm_new_password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+              <div class="relative">
+                <input
+                  type="password" id="confirm_new_password" name="confirm_new_password"
+                  placeholder="Repeat new password"
+                  class="block w-full rounded-md border-gray-300 shadow-sm
+                         focus:border-blue-500 focus:ring-blue-500 py-2 pl-10"
+                />
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Password requirements info panel -->
+          <div class="p-6 bg-gray-50 rounded-lg border border-gray-100">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Password Requirements</h3>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li id="req-length"  class="flex items-center"><span class="req-icon mr-2">○</span> At least 8 characters</li>
+              <li id="req-upper"   class="flex items-center"><span class="req-icon mr-2">○</span> One uppercase letter</li>
+              <li id="req-lower"   class="flex items-center"><span class="req-icon mr-2">○</span> One lowercase letter</li>
+              <li id="req-number"  class="flex items-center"><span class="req-icon mr-2">○</span> One number</li>
+              <li id="req-special" class="flex items-center"><span class="req-icon mr-2">○</span> One special character (!@#$…)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button
+            type="submit"
+            class="bg-red-600 text-white px-6 py-2 rounded-md hover:bg-red-700 transition-colors duration-200
+                  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 flex items-center"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+            Update Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- Error State -->
+<div id="errorState" class="hidden bg-white shadow-lg rounded-lg p-6 text-center">
+  <div class="flex flex-col items-center p-6">
+    <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h3 class="text-xl font-bold text-gray-800 mb-2">Failed to Load Profile</h3>
+    <p class="text-gray-600 mb-6">Unable to load your profile. Please try again.</p>
+    <button onclick="loadProfile()"
+      class="bg-blue-700 text-white px-6 py-2 rounded-md hover:bg-blue-800 inline-flex items-center
+             focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+      Retry
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) {
+    window.location.href = '/login';
+    return;
+  }
+
+  function showError(msg) {
+    const el = document.getElementById('errorAlert');
+    document.getElementById('errorMessage').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => {
+      el.classList.add('opacity-0');
+      setTimeout(() => { el.classList.add('hidden'); el.classList.remove('opacity-0'); }, 300);
+    }, 5000);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('successAlert');
+    document.getElementById('successMessage').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => {
+      el.classList.add('opacity-0');
+      setTimeout(() => { el.classList.add('hidden'); el.classList.remove('opacity-0'); }, 300);
+    }, 5000);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  async function loadProfile() {
+    document.getElementById('loadingState').classList.remove('hidden');
+    document.getElementById('profileCard').classList.add('hidden');
+    document.getElementById('errorState').classList.add('hidden');
+
+    try {
+      const res = await fetch('/users/me', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Failed to load profile');
+      }
+
+      const user = await res.json();
+
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('profileCard').classList.remove('hidden');
+
+      // Fill form fields
+      document.getElementById('username').value    = user.username;
+      document.getElementById('email').value       = user.email;
+      document.getElementById('first_name').value  = user.first_name;
+      document.getElementById('last_name').value   = user.last_name;
+
+      // Account details panel
+      const statusBadge = document.getElementById('statusBadge');
+      statusBadge.innerHTML = user.is_active
+        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>'
+        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>';
+
+      const verifiedBadge = document.getElementById('verifiedBadge');
+      verifiedBadge.innerHTML = user.is_verified
+        ? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Verified</span>'
+        : '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Unverified</span>';
+
+      const fmt = (d) => d ? new Date(d).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '—';
+      document.getElementById('createdAt').textContent = fmt(user.created_at);
+      document.getElementById('updatedAt').textContent = fmt(user.updated_at);
+      document.getElementById('lastLogin').textContent  = fmt(user.last_login);
+
+    } catch (err) {
+      document.getElementById('loadingState').classList.add('hidden');
+      document.getElementById('errorState').classList.remove('hidden');
+      showError(err.message);
+    }
+  }
+
+  // Profile form submit
+  document.getElementById('profileForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
+
+    try {
+      const res = await fetch('/users/me', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          email:      document.getElementById('email').value.trim(),
+          first_name: document.getElementById('first_name').value.trim(),
+          last_name:  document.getElementById('last_name').value.trim(),
+        })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Update failed');
+      }
+
+      const updated = await res.json();
+      // Update localStorage username in case it changed
+      localStorage.setItem('username', updated.username);
+      showSuccess('Profile updated successfully!');
+      // Refresh account details
+      document.getElementById('updatedAt').textContent =
+        new Date(updated.updated_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  // Password requirements checker
+  const newPassInput = document.getElementById('new_password');
+  const requirements = {
+    'req-length':  (p) => p.length >= 8,
+    'req-upper':   (p) => /[A-Z]/.test(p),
+    'req-lower':   (p) => /[a-z]/.test(p),
+    'req-number':  (p) => /\d/.test(p),
+    'req-special': (p) => /[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/.test(p),
+  };
+
+  newPassInput.addEventListener('input', () => {
+    const p = newPassInput.value;
+    Object.entries(requirements).forEach(([id, test]) => {
+      const li = document.getElementById(id);
+      const icon = li.querySelector('.req-icon');
+      if (test(p)) {
+        li.classList.add('text-green-600');
+        li.classList.remove('text-gray-600');
+        icon.textContent = '✓';
+      } else {
+        li.classList.remove('text-green-600');
+        li.classList.add('text-gray-600');
+        icon.textContent = '○';
+      }
+    });
+  });
+
+  // Password form submit
+  document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const orig = btn.innerHTML;
+
+    const currentPass  = document.getElementById('current_password').value;
+    const newPass      = document.getElementById('new_password').value;
+    const confirmPass  = document.getElementById('confirm_new_password').value;
+
+    if (newPass !== confirmPass) {
+      showError('New passwords do not match.');
+      return;
+    }
+
+    // Client-side strength check
+    const checks = Object.values(requirements).map(fn => fn(newPass));
+    if (checks.some(r => !r)) {
+      showError('New password does not meet all requirements.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Updating...';
+
+    try {
+      const res = await fetch('/users/me/password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          current_password:     currentPass,
+          new_password:         newPass,
+          confirm_new_password: confirmPass,
+        })
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) { localStorage.clear(); window.location.href = '/login'; return; }
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || 'Password update failed');
+      }
+
+      showSuccess('Password updated successfully! Redirecting to login...');
+      e.target.reset();
+      // Reset requirement indicators
+      Object.keys(requirements).forEach(id => {
+        const li = document.getElementById(id);
+        li.classList.remove('text-green-600');
+        li.classList.add('text-gray-600');
+        li.querySelector('.req-icon').textContent = '○';
+      });
+      // Clear auth tokens and redirect to login — user must re-authenticate
+      setTimeout(() => {
+        localStorage.clear();
+        window.location.href = '/login';
+      }, 1500);
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  });
+
+  // Make loadProfile globally accessible for the retry button
+  window.loadProfile = loadProfile;
+  loadProfile();
+});
+</script>
+{% endblock %}
