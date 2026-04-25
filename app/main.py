@@ -150,6 +150,11 @@ def edit_profile_page(request: Request):
     """Profile editing page."""
     return templates.TemplateResponse(request, name="edit_profile.html", context={"request": request})
 
+@app.get("/dashboard/stats", response_class=HTMLResponse, tags=["web"])
+def stats_page(request: Request):
+    """Statistics dashboard page."""
+    return templates.TemplateResponse(request, name="stats.html", context={"request": request})
+
 # ------------------------------------------------------------------------------
 # Health Endpoint
 # ------------------------------------------------------------------------------
@@ -307,6 +312,31 @@ def update_current_user_password(
     current_user.updated_at = __import__('datetime').datetime.utcnow()
     db.commit()
     return None
+
+
+# ------------------------------------------------------------------------------
+# Stats Endpoint
+# ------------------------------------------------------------------------------
+from app.schemas.stats import StatsResponse
+from app.services.stats import compute_stats
+
+@app.get("/stats", response_model=StatsResponse, tags=["stats"])
+def get_stats(
+    current_user=Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Return usage statistics for the currently authenticated user.
+
+    Metrics include:
+    - total calculations performed
+    - total and average operand counts
+    - average / min / max result values
+    - per-operation-type breakdown with percentages
+    - most-used and least-used operation
+    - timestamps of first and last calculation
+    """
+    return compute_stats(user_id=current_user.id, db=db)
 
 
 # ------------------------------------------------------------------------------
