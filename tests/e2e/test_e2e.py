@@ -75,6 +75,7 @@ def _create_calc(page, calc_type, inputs):
 
 @pytest.mark.e2e
 def test_home_page_loads(page, fastapi_server):
+    """Verifies that the home page loads successfully and displays correct title and header."""
     _goto(page, fastapi_server)
     expect(page).to_have_title("Home")
     expect(page.locator("h1")).to_contain_text("Calculations App")
@@ -82,6 +83,7 @@ def test_home_page_loads(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_login_page_loads(page, fastapi_server):
+    """Ensures the login page loads correctly and the login form is visible."""
     _goto(page, fastapi_server, "/login")
     expect(page).to_have_title("Login")
     expect(page.locator("#loginForm")).to_be_visible()
@@ -89,6 +91,7 @@ def test_login_page_loads(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_register_page_loads(page, fastapi_server):
+    """Ensures the registration page loads correctly and the registration form is visible."""
     _goto(page, fastapi_server, "/register")
     expect(page).to_have_title("Register")
     expect(page.locator("#registrationForm")).to_be_visible()
@@ -96,6 +99,7 @@ def test_register_page_loads(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_dashboard_redirects_if_not_logged_in(page, fastapi_server):
+    """Ensures unauthenticated users are redirected from dashboard to login page."""
     _goto(page, fastapi_server, "/dashboard")
     page.wait_for_url("**/login", timeout=5000)
 
@@ -106,6 +110,7 @@ def test_dashboard_redirects_if_not_logged_in(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_register_success(page, fastapi_server):
+    """Tests successful user registration and verifies redirect to login with success message."""
     user = _unique_user()
     _goto(page, fastapi_server, "/register")
     _fill_form(page, user)
@@ -122,6 +127,7 @@ def test_register_success(page, fastapi_server):
     ("validuser", "pass1", "pass2"),
 ])
 def test_register_validation_errors(page, fastapi_server, username, password, confirm):
+    """Validates that registration form shows errors for invalid input combinations."""
     _goto(page, fastapi_server, "/register")
     _fill_form(page, {
         "username": username,
@@ -137,6 +143,7 @@ def test_register_validation_errors(page, fastapi_server, username, password, co
 
 @pytest.mark.e2e
 def test_login_success(page, fastapi_server):
+    """Ensures a registered user can log in successfully and reach the dashboard."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
     expect(page).to_have_url(f"{_base_url(fastapi_server)}/dashboard")
@@ -144,6 +151,7 @@ def test_login_success(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_login_remember_me(page, fastapi_server):
+    """Verifies that 'remember me' persists the username on subsequent login visits."""
     user = _unique_user()
     _register(page, fastapi_server, user)
 
@@ -159,6 +167,7 @@ def test_login_remember_me(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_dashboard_empty_state(page, fastapi_server):
+    """Checks that dashboard displays an empty state when no calculations exist."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
     expect(page.locator("#calculationsTable")).to_contain_text("No calculations found")
@@ -172,6 +181,7 @@ def test_dashboard_empty_state(page, fastapi_server):
     ("division", "100,4", "25"),
 ])
 def test_dashboard_create_calculations(page, fastapi_server, calc_type, inputs, expected):
+    """Tests creation of basic calculations and verifies correct results in dashboard table."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
 
@@ -184,6 +194,7 @@ def test_dashboard_create_calculations(page, fastapi_server, calc_type, inputs, 
 
 @pytest.mark.e2e
 def test_dashboard_invalid_inputs(page, fastapi_server):
+    """Ensures invalid calculation inputs trigger an error message."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
 
@@ -195,6 +206,7 @@ def test_dashboard_invalid_inputs(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_dashboard_delete(page, fastapi_server):
+    """Verifies that a calculation can be deleted and dashboard updates accordingly."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
 
@@ -212,6 +224,7 @@ def test_dashboard_delete(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_layout_logout_visibility(page, fastapi_server):
+    """Checks logout button visibility based on authentication state."""
     _goto(page, fastapi_server)
     expect(page.locator("#layoutLogoutBtn")).to_be_hidden()
 
@@ -221,11 +234,12 @@ def test_layout_logout_visibility(page, fastapi_server):
 
 
 # ---------------------------------------------------------------------------
-# View / Edit (sample condensed pattern)
+# View / Edit
 # ---------------------------------------------------------------------------
 
 @pytest.mark.e2e
 def test_view_calculation_flow(page, fastapi_server):
+    """Tests viewing a calculation and verifying displayed result correctness."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
     _create_calc(page, "multiplication", "4,5")
@@ -240,6 +254,7 @@ def test_view_calculation_flow(page, fastapi_server):
 
 @pytest.mark.e2e
 def test_edit_calculation_flow(page, fastapi_server):
+    """Tests editing a calculation and verifying updated result is reflected."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
     _create_calc(page, "addition", "1,2")
@@ -255,7 +270,7 @@ def test_edit_calculation_flow(page, fastapi_server):
 
 
 # ---------------------------------------------------------------------------
-# New Operations (fully reused helpers)
+# New Operations
 # ---------------------------------------------------------------------------
 
 @pytest.mark.e2e
@@ -268,6 +283,7 @@ def test_edit_calculation_flow(page, fastapi_server):
     ("percentage", "25,200", "12.5"),
 ])
 def test_new_operations(page, fastapi_server, calc_type, inputs, expected):
+    """Validates advanced calculation operations and ensures correct results are displayed."""
     user = _unique_user()
     _auth(page, fastapi_server, user)
 
@@ -276,3 +292,4 @@ def test_new_operations(page, fastapi_server, calc_type, inputs, expected):
     table = page.locator("#calculationsTable")
     expect(table).to_contain_text(calc_type)
     expect(table).to_contain_text(expected)
+    

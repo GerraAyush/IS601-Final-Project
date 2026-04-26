@@ -208,7 +208,7 @@ def login_json(user_login: UserLogin, db: Session = Depends(get_db)):
     user = auth_result["user"]
     db.commit()  # commit the last_login update
 
-    # Ensure expires_at is timezone-aware
+    # Ensure expires_at is timezone-aware; fall back to 15 min from now if missing
     expires_at = auth_result.get("expires_at")
     if expires_at and expires_at.tzinfo is None:
         expires_at = expires_at.replace(tzinfo=timezone.utc)
@@ -309,6 +309,7 @@ def update_current_user_password(
         raise HTTPException(status_code=400, detail="Current password is incorrect.")
     from app.models.user import User
     current_user.password = User.hash_password(password_update.new_password)
+    # Use datetime directly — avoids a circular import with the top-level datetime import
     current_user.updated_at = __import__('datetime').datetime.utcnow()
     db.commit()
     return None

@@ -7,6 +7,7 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 async def get_redis():
+    """Return a shared aioredis connection, creating it on first call. Returns None if Redis is unavailable."""
     if not hasattr(get_redis, "redis"):
         try:
             get_redis.redis = await aioredis.from_url(
@@ -18,6 +19,7 @@ async def get_redis():
     return get_redis.redis
 
 async def add_to_blacklist(jti: str, exp: int):
+    """Add a token JTI to the Redis blacklist with a TTL matching its expiry. Silently no-ops if Redis is down."""
     try:
         redis = await get_redis()
         if redis is None:
@@ -27,6 +29,7 @@ async def add_to_blacklist(jti: str, exp: int):
         logger.warning(f"Could not add token to blacklist: {e}")
 
 async def is_blacklisted(jti: str) -> bool:
+    """Return True if the token JTI has been blacklisted. Fails open (returns False) if Redis is unavailable."""
     try:
         redis = await get_redis()
         if redis is None:

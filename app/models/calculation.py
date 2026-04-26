@@ -10,6 +10,10 @@ from app.database import Base
 
 
 class AbstractCalculation:
+    """
+    Mixin that defines the shared database columns and factory logic for all
+    calculation types. Concrete subclasses only need to implement get_result().
+    """
     
     @declared_attr
     def __tablename__(cls):
@@ -78,6 +82,7 @@ class AbstractCalculation:
 
     @classmethod
     def create(cls, calculation_type: str, user_id: uuid.UUID, inputs: List[float]) -> "Calculation":
+        """Instantiate the correct Calculation subclass for the given type. Raises ValueError for unknown types."""
         calculation_classes = {
             'addition': Addition,
             'subtraction': Subtraction,
@@ -96,12 +101,14 @@ class AbstractCalculation:
         return calculation_class(user_id=user_id, inputs=inputs)
 
     def get_result(self) -> float:
+        """Compute and return the numeric result. Must be overridden by every subclass."""
         raise NotImplementedError
 
     def __repr__(self):
         return f"<Calculation(type={self.type}, inputs={self.inputs})>"
 
 class Calculation(Base, AbstractCalculation):
+    """Concrete SQLAlchemy model. Subclasses are selected via the polymorphic 'type' column."""
     __mapper_args__ = {
         "polymorphic_on": "type",
         "polymorphic_identity": "calculation",

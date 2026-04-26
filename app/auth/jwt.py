@@ -28,9 +28,11 @@ pwd_context = CryptContext(
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify plain password with hashed password. Uses CryptContext.verify"""
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
+    """Get hashed password from plain password. Uses CryptContext.hash"""
     return pwd_context.hash(password)
 
 def create_token(
@@ -38,6 +40,7 @@ def create_token(
     token_type: TokenType,
     expires_delta: Optional[timedelta] = None
 ) -> str:
+    """Build and sign a JWT for the given user. Uses ACCESS or REFRESH secret depending on token_type."""
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
@@ -76,6 +79,7 @@ def create_token(
         )
 
 async def _decode_with_secret(token: str, secret: str, verify_exp: bool):
+    """Attempt to decode a JWT with the given secret. Returns the payload dict, or None on a signature/format error."""
     try:
         return jwt.decode(
             token,
@@ -97,6 +101,10 @@ async def decode_token(
     token_type: TokenType,
     verify_exp: bool = True
 ) -> dict[str, Any]:
+    """
+    Validate a JWT: tries the access secret first, then the refresh secret.
+    Raises 401 if the token is expired, has the wrong type, or has been revoked.
+    """
     payload = await _decode_with_secret(
         token,
         settings.JWT_SECRET_KEY,
@@ -137,6 +145,9 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ) -> User:
+    """
+    Get the current user from OAuth2PasswordBearer
+    """
     try:
         payload = await decode_token(token, TokenType.ACCESS)
         user_id = payload["sub"]
