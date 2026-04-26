@@ -198,3 +198,145 @@ pytest
 ## DockerHub
 #### URL: https://hub.docker.com/r/ayushgerra/assignment-repo
 ![Docker QR Image](/images/QRCode_20260313170037.png "My QR Code Link")
+
+
+# Calculation Types
+
+The calculator supports ten operation types. Each calculation is saved to your history and can be viewed, edited, or deleted from the dashboard.
+
+---
+
+### Addition
+**API type:** `addition`
+
+Sums all provided numbers together. Accepts two or more inputs.
+
+| Inputs | Result |
+|--------|--------|
+| `5, 10` | `15` |
+| `1, 2, 3, 4` | `10` |
+
+---
+
+### Subtraction
+**API type:** `subtraction`
+
+Subtracts each number from the one before it, left to right. Accepts two or more inputs.
+
+| Inputs | Result |
+|--------|--------|
+| `20, 8` | `12` |
+| `100, 10, 5` | `85` |
+
+---
+
+### Multiplication
+**API type:** `multiplication`
+
+Multiplies all provided numbers together. Accepts two or more inputs.
+
+| Inputs | Result |
+|--------|--------|
+| `4, 5` | `20` |
+| `2, 3, 4` | `24` |
+
+---
+
+### Division
+**API type:** `division`
+
+Divides each number by the one that follows it, left to right. Accepts two or more inputs. The divisor cannot be zero.
+
+| Inputs | Result |
+|--------|--------|
+| `100, 4` | `25` |
+| `200, 4, 5` | `10` |
+
+---
+
+### Power
+**API type:** `power`
+
+Raises the base to the given exponent. Requires exactly 2 inputs: `[base, exponent]`.
+
+| Inputs | Result |
+|--------|--------|
+| `2, 10` | `1024` |
+| `9, 0.5` | `3` |
+
+---
+
+### Root
+**API type:** `root`
+
+Computes the n-th root of a number. Requires exactly 2 inputs: `[number, n]`. The degree cannot be zero.
+
+| Inputs | Result |
+|--------|--------|
+| `27, 3` | `3` (cube root) |
+| `16, 2` | `4` (square root) |
+
+---
+
+### Modulus
+**API type:** `modulus`
+
+Returns the remainder after dividing the first number by the second. Requires exactly 2 inputs. The divisor cannot be zero.
+
+| Inputs | Result |
+|--------|--------|
+| `17, 5` | `2` |
+| `10, 3` | `1` |
+
+---
+
+### Integer Division
+**API type:** `integer_division`
+
+Divides left to right and discards any remainder, returning a whole number. Accepts two or more inputs. The divisor cannot be zero.
+
+| Inputs | Result |
+|--------|--------|
+| `17, 3` | `5` |
+| `100, 5, 2` | `10` |
+
+---
+
+### Percentage
+**API type:** `percentage`
+
+Calculates what percentage the first number is of the second: `(a / b) × 100`. Requires exactly 2 inputs. The second number cannot be zero.
+
+| Inputs | Result |
+|--------|--------|
+| `25, 200` | `12.5` |
+| `1, 4` | `25` |
+
+---
+
+### Absolute Difference
+**API type:** `abs_difference`
+
+Returns the positive distance between two numbers, regardless of order. Requires exactly 2 inputs.
+
+| Inputs | Result |
+|--------|--------|
+| `10, 3` | `7` |
+| `3, 10` | `7` |
+
+---
+
+### Input rules summary
+
+| Operation | Min inputs | Max inputs | Zero divisor allowed |
+|-----------|-----------|-----------|----------------------|
+| Addition | 2 | unlimited | — |
+| Subtraction | 2 | unlimited | — |
+| Multiplication | 2 | unlimited | — |
+| Division | 2 | unlimited | No |
+| Power | 2 | 2 | — |
+| Root | 2 | 2 | No (degree) |
+| Modulus | 2 | 2 | No (divisor) |
+| Integer Division | 2 | unlimited | No |
+| Percentage | 2 | 2 | No (denominator) |
+| Absolute Difference | 2 | 2 | — |
