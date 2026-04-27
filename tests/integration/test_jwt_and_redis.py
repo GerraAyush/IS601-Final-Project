@@ -1,10 +1,9 @@
 import pytest
-import asyncio
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from unittest.mock import AsyncMock, patch, MagicMock
-from uuid import uuid4
 
+from uuid import uuid4
 from fastapi import HTTPException, status
 
 from app.auth.jwt import (
@@ -299,3 +298,13 @@ async def test_is_blacklisted_returns_false_on_exception():
         result = await is_blacklisted("jti-err")
 
     assert result is False
+
+
+@pytest.mark.asyncio
+async def test_create_token_exception_raises_500():
+    """Force jwt.encode to raise so the except branch in create_token is covered."""
+    with patch("app.auth.jwt.jwt.encode", side_effect=Exception("encode failure")):
+        with pytest.raises(HTTPException) as exc_info:
+            create_token(uuid4(), TokenType.ACCESS)
+    assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert "encode failure" in exc_info.value.detail

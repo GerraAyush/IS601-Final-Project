@@ -404,3 +404,9 @@ def test_calculation_update_standard_type_rejects_one_input():
     with pytest.raises(ValidationError) as exc_info:
         CalculationUpdate(type="addition", inputs=[5])
     assert len(exc_info.value.errors()) > 0
+
+def test_calculation_update_explicit_none_type_is_valid():
+    """Passing type=None explicitly to CalculationUpdate hits the early-return branch."""
+    from app.schemas.calculation import CalculationUpdate
+    cu = CalculationUpdate(type=None, inputs=[1, 2])
+    assert cu.type is None

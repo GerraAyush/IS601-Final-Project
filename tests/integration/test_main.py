@@ -1,4 +1,6 @@
 import pytest
+from unittest.mock import MagicMock
+
 from uuid import uuid4
 from fastapi.testclient import TestClient
 
@@ -574,3 +576,88 @@ def test_main_edit_calculation_page(client, base_url):
 def test_main_edit_profile_page(client, base_url):
     r = client.get(f"{base_url}/dashboard/edit-profile")
     assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# main.py line 42-45: lifespan startup (create_all + prints)
+# ---------------------------------------------------------------------------
+
+def test_main_lifespan_startup_runs():
+    """Using TestClient as a context manager triggers the lifespan, covering create_all."""
+    with TestClient(app) as c:
+        r = c.get("/")
+        assert r.status_code == 200
+
+
+# ---------------------------------------------------------------------------
+# main.py line 214: expires_at is present but naive (no tzinfo)
+# ---------------------------------------------------------------------------
+
+def test_main_login_naive_expires_at_gets_timezone(client, base_url):
+    """When authenticate returns a naive expires_at, the route attaches UTC tzinfo."""
+    from unittest.mock import patch
+    from datetime import datetime as dt
+
+    data, _ = _user_and_token(client, base_url)
+
+    naive_expires = dt(2099, 1, 1, 0, 0, 0)   # no tzinfo → naive
+    assert naive_expires.tzinfo is None
+
+    fake_user = MagicMock()
+    fake_user.id         = uuid4()
+    fake_user.username   = "fakeuser"
+    fake_user.email      = "fake@example.com"
+    fake_user.first_name = "Fake"
+    fake_user.last_name  = "User"
+    fake_user.is_active  = True
+    fake_user.is_verified = False
+
+    fake_auth = {
+        "access_token":  "tok_access",
+        "refresh_token": "tok_refresh",
+        "expires_at":    naive_expires,
+        "user":          fake_user,
+    }
+    with patch("app.main.User.authenticate", return_value=fake_auth):
+        r = client.post(f"{base_url}/auth/login",
+                        json={"username": data["username"], "password": data["password"]})
+
+    assert r.status_code == 200
+    body = r.json()
+    # expires_at must be serialised with timezone offset, not as a bare naive string
+    assert "expires_at" in body
+
+
+# ---------------------------------------------------------------------------
+# main.py line 297-299: update_users_me except Exception → rollback + 400
+# ---------------------------------------------------------------------------
+
+def test_main_update_users_me_unexpected_exception_returns_400(client, base_url):
+    """Generic exception during profile update triggers rollback and returns 400."""
+    from unittest.mock import patch
+
+    _, token = _user_and_token(client, base_url)
+
+    with patch("app.main.User.update", side_effect=Exception("db exploded")):
+        r = client.put(f"{base_url}/users/me",
+                       json={"first_name": "Boom"},
+                       headers={"Authorization": f"Bearer {token}"})
+
+    assert r.status_code == 400
+    assert "db exploded" in r.json()["detail"]
+
+
+# ---------------------------------------------------------------------------
+# main.py line 284: duplicate username branch in update_users_me
+# ---------------------------------------------------------------------------
+
+def test_main_update_users_me_duplicate_username_returns_400(client, base_url):
+    """PUT /users/me with a username already taken by another account returns 400."""
+    data1, token1 = _user_and_token(client, base_url)
+    data2, _      = _user_and_token(client, base_url)
+
+    r = client.put(f"{base_url}/users/me",
+                   json={"username": data2["username"]},
+                   headers={"Authorization": f"Bearer {token1}"})
+    assert r.status_code == 400
+    assert "already in use" in r.json()["detail"]

@@ -355,3 +355,21 @@ def test_user_init_with_hashed_password_kwarg(fake_user_data):
         hashed_password=hashed,
     )
     assert user.password == hashed
+
+
+def test_user_create_password_too_short_validator_branch():
+    """Directly invoke validate_password_strength with a short password to cover line 62."""
+    from app.schemas.user import UserCreate
+    from pydantic import ValidationError
+
+    # model_construct bypasses field validators, letting us reach the model validator
+    instance = UserCreate.model_construct(
+        first_name="Test",
+        last_name="User",
+        email="test@example.com",
+        username="testuser",
+        password="Ab1!",
+        confirm_password="Ab1!",
+    )
+    with pytest.raises(ValueError, match="at least 8 characters"):
+        instance.validate_password_strength()
