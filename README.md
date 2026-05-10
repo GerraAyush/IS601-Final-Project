@@ -340,3 +340,12 @@ Returns the positive distance between two numbers, regardless of order. Requires
 | Integer Division | 2 | unlimited | No |
 | Percentage | 2 | 2 | No (denominator) |
 | Absolute Difference | 2 | 2 | — |
+
+## Reflection
+This project helped me strengthen my understanding of full-stack application development, testing strategies, and software design principles. In addition to the original calculator functionality, I implemented all three extension features: user profile/password management, additional calculation operations, and a reporting/history feature.
+
+While developing these features, I worked with database updates, API route handling, schema validation, and front-end integration. I also gained practical experience writing different levels of tests, including unit tests for calculation and profile logic, integration tests for API/database behavior, and end-to-end tests to validate complete user workflows.
+
+One of the most valuable parts of the project was learning how different layers of the application interact together. Adding new calculation types required updating the backend logic, Pydantic schemas, routes, and UI consistently, while the profile and history features emphasized secure data handling and maintaining clean database interactions.
+
+Overall, this project improved my confidence in building scalable applications, debugging issues across the stack, and writing reliable automated tests to ensure application stability.
