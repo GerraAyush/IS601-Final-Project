@@ -43,7 +43,7 @@ pytest-cover==3.0.0
 pytest-coverage==0.0
 python-dotenv==1.2.2
 python-jose==3.5.0
-python-multipart==0.0.26
+python-multipart==0.0.27
 requests==2.33.1
 rsa==4.9.1
 six==1.17.0
